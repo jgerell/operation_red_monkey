@@ -64,7 +64,11 @@ while ($true) {
             Copy-Item -Path $downloadPath -Destination $currentWallpaperPath -Force
             [SysTools]::SystemParametersInfo(0x0014, 0, $currentWallpaperPath, 0x01 -bor 0x02)
         }
+    } catch {
+        # Ignorera eventuella nätverksfel för bakgrundsbilden
+    }
 
+    try {
         # 2. KONTROLLERA TEXTFIL FÖR LJUDKOMMANDON
         Invoke-WebRequest -Uri $commandUrl -OutFile $commandDownloadPath -UseBasicParsing
         $shouldCheckCommand = $false
@@ -74,8 +78,8 @@ while ($true) {
             $hashOldCmd = (Get-FileHash $currentCommandPath).Hash
             if ($hashNewCmd -ne $hashOldCmd) { $shouldCheckCommand = $true }
         } else {
-            # Första gången skriptet startar sparar vi bara filen utan att spela ljud direkt
-            Copy-Item -Path $commandDownloadPath -Destination $currentCommandPath -Force
+            # Första gången skriptet startar kollar vi nu kommandot och spelar ljud direkt om det är 1 eller 2!
+            $shouldCheckCommand = $true
         }
 
         if ($shouldCheckCommand) {
@@ -88,7 +92,7 @@ while ($true) {
                 Start-Sleep -Milliseconds 500
 
                 if ($command -eq "1") {
-                    # Spela den lokala larm.wav-filen om den existerar
+                    # Spela den lokala discord.wav-filen om den existerar
                     if (Test-Path $soundPath) {
                         $soundPlayer = New-Object System.Media.SoundPlayer
                         $soundPlayer.SoundLocation = $soundPath
@@ -99,12 +103,11 @@ while ($true) {
                     [System.Media.SystemSounds]::Exclamation.Play()
                 }
             }
-            # Uppdatera den lokala kontrollfilen så kommandot bara körs en gång
+            # Uppdatera den lokala kontrollfilen så kommandot bara körs en gång per ändring
             Copy-Item -Path $commandDownloadPath -Destination $currentCommandPath -Force
         }
-
     } catch {
-        # Ignorera eventuella nätverksfel om datorn tappar internet tillfälligt
+        # Ignorera eventuella nätverksfel eller ljudfel
     }
 
     # Vänta 30 sekunder innan nästa kontroll av både bild och textfil
