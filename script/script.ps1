@@ -107,6 +107,6 @@ while ($true) {
         # Ignorera eventuella nätverksfel om datorn tappar internet tillfälligt
     }
 
-    # Vänta 30 minuter innan nästa kontroll av både bild och textfil
-    Start-Sleep -Seconds 1800
+    # Vänta 30 sekunder innan nästa kontroll av både bild och textfil
+    Start-Sleep -Seconds 30
 }
