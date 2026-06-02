@@ -1,1 +1,1 @@
-Lägg in secret_script.vbs, script, m.m. här!
+Lägg in secret_script.vbs, wrapper.ps1, m.m. här!
